@@ -1,0 +1,425 @@
+dbdiagram.io <- schema designer
+
+
+many side of relationship gets foreign key column
+
+
+
+ON DELETE NO ACTION
+ON DELETE RESTRICT
+ON DELETE CASCADE
+ON DELETE SET NULL
+ON DELETE SET DEFAULT
+
+
+
+Aggregation - words like most, average,least 
+Joins - find data involves multiple resources
+
+INNER JOIN (Simply JOIN) - skips non matched/null entry rows
+LEFT OUTER JOIN (LEFT JOIN) - gives all entries on left side of join - order of tables matter
+RIGHT OUTER JOIN (RIGHT JOIN) - gives all entries on right side of join - order of tables matter
+FULL JOIN - gives everything
+
+
+
+
+
+
+
+
+
+3 way join
+Write a query that will return the title of each book, along with the name of the author, and the rating of a review.  Only show rows where the author of the book is also the author of the review.
+
+Table of authors
+
+    +----+-----------------+
+    | id | name            |
+    +----+-----------------+
+    | 1  | Stephen King    |
+    +----+-----------------+
+    | 2  | Agatha Christie |
+    +----+-----------------+
+    | 3  | JK Rowling      |
+    +----+-----------------+
+
+Table of books
+
+    +----+---------------------+-----------+
+    | id | title               | author_id |
+    +----+---------------------+-----------+
+    | 1  | The Dark Tower      | 1         |
+    +----+---------------------+-----------+
+    | 2  | Affair At Styles    | 2         |
+    +----+---------------------+-----------+
+    | 3  | Chamber of Secrets  | 3         |
+    +----+---------------------+-----------+
+
+Table of reviews
+
+    +----+--------+-------------+---------+
+    | id | rating | reviewer_id | book_id |
+    +----+--------+-------------+---------+
+    | 1  | 3      | 1           | 2       |
+    +----+--------+-------------+---------+
+    | 2  | 4      | 2           | 1       |
+    +----+--------+-------------+---------+
+    | 3  | 5      | 3           | 3       |
+    +----+--------+-------------+---------+
+
+- select title,name,rating from reviews join books on books.id = reviews.book_id join authors on authors.id = books.author_id and authors.id = reviews.reviewer_id;
+
+
+we cannot select ungrouped column in group-by query, but can get aggregate result
+
+Aggregation function - reduces rows to one, cannot select and aggregate same time
+grouping - reducing rows to fewer
+
+
+from, join, where, group by, having
+
+where - here filter set of rows
+having - filters set of groups
+group by - groups rows by a unique set of values
+
+ORDER BY, DESC, ASC, LIMIT, OFFSET
+
+UNION(UNION-should have same columns on both side, remove duplicates),
+INTERSECTION (find common rows in result of 2 queries, remove duplicates),
+UNION ALL(UNION ALL also give redundant entries from both side)
+INTERSECT ALL(find common rows in result of 2 queries),
+EXCEPT (rows in first queries but not in second, remove duplicates),
+EXCEPT ALL (rows in first queries but not in second)
+
+
+
+
+Operator
+> ALL single column (structure of data the subquery must return)
+>= ALL
+<= ALL
+= ALL
+<> ALL
+
+> SOME (or ANY) single column (structure of data the subquery must return)
+< SOME
+>= SOME
+<= SOME
+<> SOME
+
+
+> (single value)
+< (single value)
+>= (single value)
+<= (single value)
+= (single value)
+<> OR != (single value)
+IN (single column)
+NOT IN (single column)
+
+DISTINCT
+SELECT COUNT(DISTINCT department) FROM products; (COUNT allowed only on one distinct column)
+SELECT DISTINCT department, name FROM products; (distinct pair of department, name)
+
+
+SELECT GREATEST(20,10,30);
+SELECT name, weight, GREATEST(30,2*weight) FROM products;
+
+SELECT LEAST(1000,20,50,100);
+SELECT name, price, LEAST(price * 0.5,400) FROM products;
+
+SELECT 
+  name,
+  price,
+  CASE
+    WHEN price > 600 THEN 'high'
+    WHEN price > 300 THEN 'medium'
+    ELSE 'cheap'
+  END
+FROM products;
+
+
+Numeric Types 
+id - serial
+store number without decimal - integer
+store a number with decimal and data should be accurate - numeric, decimal
+number with decimal and decimal doesn't make  a big difference - double precision, float, real - good performance at calculations
+
+SELECT (2.0::INTEGER); (query results to integer)
+SELECT ('asdasdasd'::CHAR(3));
+
+CHAR(3) - must be length 3
+VARCHAR - any length (or VARCHAR(5))
+
+
+BOOLEAN TYPES:
+
+'true','t','y',1   ->  true
+'false','no','f','n',0   ->  false
+null -> null
+SELECT('t'::BOOLEAN); -> true
+
+
+time and date
+SELECT ('1980 November 20'::DATE);  -> Converted to date
+SELECT ('01:23'::TIME); -> converted to time
+
+('TIME WITH TIME ZONE','TIME WITHOUT TIME ZONE');
+
+SELECT ('01:23:23 AM EST'::TIME WITH TIME ZONE); 
+
+SELECT ('Nov-20-1980 1:23 AM PST':: TIMESTAMP WITH TIME ZONE);
+
+
+duration calculations:
+
+SELECT ('1 D 20 H 30 M 45 S'::INTERVAL) - ('1 D'::INTERVAL);
+
+SELECT ('NOV-20-1980 1:23 AM EST'::TIMESTAMP WITH TIME ZONE) - ('4 D'::INTERVAL);
+
+SELECT ('NOV-20-1980 1:23 AM EST'::TIMESTAMP WITH TIME ZONE) - ('NOV-10-1980 1:23 AM EST'::TIMESTAMP WITH TIME ZONE); 
+
+
+
+Alternative to polymorphic association:
+
+
+likes -> id, user_id, post_id, comment_id
+posts -> id,  url
+comments -> id, contents
+
+Add check of (either post like or comment like should be there in the entry)
+(
+	COALESCE((post_id)::BOOLEAN::INTEGER,0)
+	+
+	COALSCE((comment_id)::BOOLEAN::INTEGER,0)
+) = 1
+
+polymorphic associations involve multiple different tables for the liked_id, making it impossible to enforce a foreign key constrain
+
+SHOW data_directory;
+
+SELECT oid,datname FROM pg_database;
+
+SELECT * FROM pg_class;
+
+
+- CREATE INDEX users_username_idx ON users(username);
+- DROP INDEX users_username_idx;
+
+- EXPLAIN ANALYSE SELECT * from users where username='Emil30'; (EXPLAIN - just gets info, EXPLAINT ANALYSE - executes query actually)
+
+- SELECT pg_size_pretty(pg_relation_size('users_username_idx'));
+
+B-Tree, Hash, GiST, SP-GiST, GIN, BRIN  index types
+
+Postgres automatically creates index for any unique constraint, or primary key, you don't need to manually create it (also, these are not listed in pgadmin)
+if you wanna see those run following:
+
+- SELECT relname, relkind FROM  pg_class where relkind = 'i';
+
+
+
+Different statistics of table
+- SELECT * FROM pg_stats WHERE tablename = 'users';
+
+
+CTE example (Common Table Expression)  <-- easier to read
+
+WITH tags AS (
+	SELECT user_id, created_at FROM caption_tags
+	UNION ALL
+	SELECT user_id, created_at FROM photo_tags
+)
+SELECT users.username, tags.created_at
+FROM public.users
+JOIN tags AS tags ON tags.user_id = users.id
+WHERE tags.created_at < '2010-01-07';
+
+
+Recursive CTE (will have union inside it) (for tree/graph data structure)
+
+WITH RECURSIVE countdown(val) AS
+(
+	SELECT 3 AS val  -- Initial, Non-recursive query
+	UNION
+	SELECT val - 1 FROM countdown WHERE val > 1  -- Recursive query
+)
+
+SELECT * FROM countdown;
+
+
+Instagram follow suggestion query
+
+WITH RECURSIVE suggestions (leader_id, follower_id, depth) AS(
+		SELECT leader_id , follower_id, 1 AS depth
+		FROM followers
+		WHERE follower_id = 1000
+	UNION
+		SELECT followers.leader_id, followers.follower_id, depth + 1
+		FROM followers
+		JOIN suggestions ON suggestions.leader_id = followers.follower_id
+		WHERE depth < 3
+)
+SELECT DISTINCT users.id, users.username
+FROM suggestions
+JOIN  users ON users.id  = suggestions.leader_id
+WHERE depth > 1
+LIMIT 30;
+
+
+
+
+View can be referred later
+
+
+
+CREATE VIEW tags AS (
+	select id,created_at,user_id,post_id, 'photo_tag' as type from photo_tags
+	union all
+	select id,created_at,user_id,post_id ,'caption_tag as type from caption_tags
+);
+
+select * from tags where type = 'caption_tag';
+
+
+
+
+create view recent_posts as (
+select *
+from posts
+order by created_at desc
+limit 10
+);
+select * from recent_posts;
+
+
+CREATE OR REPLACE VIEW recent_posts as (
+select * from posts
+order by created_at desc
+limit 15
+);
+
+DROP VIEW recent_posts;
+
+
+
+- slow query without materialized view,
+
+select 
+	date_trunc('week', coalesce(posts.created_at,comments.created_at)) as week, -- give whichever value is not null(posts.created_at,comments.created_at)
+	count(posts.id) as num_posts,
+	count(comments.id) as num_comments
+from likes
+left join posts on posts.id = likes.post_id
+left join comments on comments.id = likes.comment_id
+
+(try removing left join, you will get null, confirm which join you wanna use)
+
+- with materialized view
+
+create materialized view weekly_likes as (
+select 
+	date_trunc('week', coalesce(posts.created_at,comments.created_at)) as week, -- give whichever value is not null
+	count(posts.id) as num_posts,
+	count(comments.id) as num_comments
+from likes
+left join posts on posts.id = likes.post_id
+left join comments on comments.id = likes.comment_id
+group by week
+order by week
+) with data;
+
+select * from weekly_likes;
+
+
+
+
+delete from posts where created_at < '2010-02-01';
+
+REFRESH MATERIALIZED VIEW weekly_likes;
+
+
+While a view dynamically executes a query each time it's referenced, a materialized view provides precomputed results based on its last refresh, allowing for faster data retrieval when accessing those results.
+
+
+
+
+
+Transactions - Begin, Rollback, Commit (Open,Close transaction) 
+losing connection will rollback automatically
+Rollback - For any error occur we can use rollback
+commit - will commit changes to real db
+
+we want to run some number of queries in sequence, all should be executed or none should be executed.
+Running a bad command will put the transaction in an aborted state - you must rollback. (ROLLBACK)
+
+NPM migration package - node-pg-migrate, db-migrate, sequelize, typeorm
+- highly recommended writing migrations manually.
+
+
+
+
+Data and schema migration together, 
+one such case scenario and strategy
+
+Add column loc(schema migration) -> Deploy new version of API that will write values to both lat/lng and loc ->
+copy lat/lng to loc(data migration) -> update code to only write to loc column ->
+drop columns lat/lng
+
+
+a client is a connection between node and DB
+pool is multiple such client
+
+
+SQL Injection solution - prepared statements
+
+PREPARE GetUser(string) AS 
+SELECT *
+FROM users
+WHERE id = $1;
+
+EXECUTE GetUser('127');
+
+So for above queries, if you use conventional approach like `SELECT * FROM users WHERE id = ${id};` one can pass query statement in place of id,
+so we have to use prepared statements.
+
+In prepared statements, we can specify values for a query string and not identifiers (eg. SELECT id From users WHERE username = 'karan'; id here is identifier and username is value)
+
+
+- 'INSERT INTO users (username, bio) VALUES ($1, $2) RETURNING *;'
+returning *, will return that row
+
+
+
+- "test": "jest --no-cache",
+run jest tests files in parallel
+
+use different schemas for different test files, in a single database. (default is public)
+
+CREATE SCHEMA test;
+
+CREATE TABLE test.users (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    bio VARCHAR(400),
+    username VARCHAR(30) NOT NULL
+);
+
+INSERT INTO test.users (username)
+VALUES
+	('Alex'),
+	('dfsdfdfs')
+
+SELECT * FROM test.users
+ORDER BY id ASC;
+
+
+-SHOW search_path;
+search_path = "$user", public (first try a schema with the same name as the current user, then fall back to public)
+- set search_path to test, public;
+- set search_path to "$user", public;
+
+
